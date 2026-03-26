@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imprimir Ordem — Pianetto Transportes</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 12px; background: #f0f2f5; color: #222; }
+
+  /* BARRA DE AÇÃO (não aparece no PDF) */
+  .action-bar {
+    background: #003366; padding: 10px 20px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .action-bar img { height: 36px; filter: brightness(0) invert(1); }
+  .action-btn {
+    border: none; border-radius: 6px; padding: 8px 16px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; gap: 7px; text-decoration: none;
+    transition: all .15s;
+  }
+  .btn-back { background: rgba(255,255,255,.15); color: #fff; }
+  .btn-back:hover { background: rgba(255,255,255,.25); }
+  .btn-print { background: #198754; color: #fff; }
+  .btn-print:hover { background: #136740; }
+  .btn-dup { background: #0077cc; color: #fff; }
+  .btn-dup:hover { background: #005fa3; }
+  .action-bar-title { color: #fff; font-size: 13px; font-weight: 700; margin-left: auto; opacity: .8; }
+
+  /* PÁGINA */
+  .page { max-width: 820px; margin: 20px auto; padding: 0 15px 40px; }
+  .documento {
+    background: #fff; border-radius: 10px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+
+  /* CABEÇALHO */
+  .doc-header {
+    background: linear-gradient(135deg, #003366 0%, #005bb5 100%);
+    padding: 20px 28px; display: flex; align-items: center; gap: 20px;
+    color: #fff;
+  }
+  .logo-box { background: #fff; border-radius: 8px; padding: 8px 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .logo-box img { height: 55px; max-width: 160px; object-fit: contain; }
+  .header-info h1 { font-size: 20px; font-weight: 800; letter-spacing: 1px; }
+  .header-info p { font-size: 11px; opacity: .85; margin-top: 3px; line-height: 1.6; }
+
+  /* BARRA OC */
+  .doc-oc-bar {
+    background: rgba(0,51,102,.85);
+    padding: 8px 28px; display: flex; gap: 24px; align-items: center; flex-wrap: wrap;
+    border-bottom: 2px solid #fff2;
+  }
+  .doc-oc-bar span { color: rgba(255,255,255,.85); font-size: 12px; font-weight: 600; }
+  .oc-badge { background: #e63946; color: #fff; font-size: 13px; font-weight: 800; padding: 4px 14px; border-radius: 20px; }
+  .pedido-val { color: #fff; font-weight: 700; }
+  .status-badge-doc {
+    padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;
+    border: 1.5px solid #fff; color: #fff;
+  }
+
+  /* SEÇÕES */
+  .section-title {
+    background: #003366; color: #fff; font-size: 10px; font-weight: 700;
+    letter-spacing: 1px; padding: 5px 20px; text-transform: uppercase;
+  }
+  .section-body { padding: 12px 24px; }
+
+  /* GRID DE DADOS */
+  .data-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px 20px; }
+  .data-field label { font-size: 9px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 2px; }
+  .data-field p { font-size: 13px; font-weight: 700; color: #222; border-bottom: 1px solid #e0e6ef; padding-bottom: 3px; }
+
+  /* TABELA DE VEÍCULOS */
+  .vehicle-table { width: 100%; border-collapse: collapse; }
+  .vehicle-table th {
+    background: #e8edf3; font-size: 9px; font-weight: 700; color: #444;
+    text-transform: uppercase; padding: 6px 10px; border: 1px solid #d0d8e4;
+  }
+  .vehicle-table td { padding: 7px 10px; border: 1px solid #d0d8e4; font-size: 13px; font-weight: 700; }
+
+  /* VALORES */
+  .valores-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 20px; }
+  .valor-destaque { background: #e8f4fd; border-radius: 6px; padding: 8px 12px; }
+  .valor-destaque label { font-size: 9px; font-weight: 700; color: #003366; text-transform: uppercase; display: block; }
+  .valor-destaque p { font-size: 15px; font-weight: 800; color: #003366; margin-top: 2px; }
+
+  /* ASSINATURAS */
+  .assinatura-row { display: flex; gap: 40px; padding: 20px 24px; }
+  .assinatura-box { flex: 1; text-align: center; }
+  .assinatura-box .linha { border-top: 1.5px solid #333; padding-top: 6px; margin-top: 32px; }
+  .assinatura-box p { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #333; }
+  .assinatura-box span { font-size: 10px; color: #666; }
+
+  /* RODAPÉ */
+  .doc-footer {
+    background: linear-gradient(135deg, #003366 0%, #005bb5 100%);
+    padding: 10px 24px; display: flex; align-items: center; gap: 14px;
+    color: rgba(255,255,255,.85); font-size: 10px;
+  }
+  .doc-footer img { height: 24px; filter: brightness(0) invert(1); opacity: .8; }
+
+  /* LOADING */
+  .loading { text-align: center; padding: 80px 20px; color: #666; font-size: 16px; }
+  .loading i { font-size: 28px; margin-bottom: 14px; display: block; animation: spin 1s linear infinite; color: #003366; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* PRINT */
+  @media print {
+    .action-bar { display: none !important; }
+    body { background: #fff; }
+    .page { max-width: 100%; padding: 0; margin: 0; }
+    .documento { border-radius: 0; box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- BARRA DE AÇÃO (não imprime) -->
+<div class="action-bar">
+  <img src="images/logo.png" alt="Pianetto" onerror="this.style.display='none'">
+  <a href="historico.html" class="action-btn btn-back"><i class="fas fa-arrow-left"></i> Voltar</a>
+  <button class="action-btn btn-dup" id="btnDuplicar"><i class="fas fa-copy"></i> Duplicar</button>
+  <button class="action-btn btn-print" onclick="window.print()"><i class="fas fa-print"></i> Imprimir / Salvar PDF</button>
+  <span class="action-bar-title" id="actionTitle">Ordem de Coleta</span>
+</div>
+
+<div class="page">
+  <div class="documento" id="documento">
+    <div class="loading"><i class="fas fa-spinner"></i>Carregando ordem...</div>
+  </div>
+</div>
+
+<script>
+let ordemAtual = null;
+
+function getParams() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('id');
+}
+
+async function carregarOrdem() {
+  const id = getParams();
+  if (!id) {
+    document.getElementById('documento').innerHTML = '<div class="loading"><i class="fas fa-exclamation-circle" style="color:#dc3545;"></i>ID da ordem não informado.</div>';
+    return;
+  }
+
+  try {
+    const res = await fetch(`tables/ordens/${id}`);
+    if (!res.ok) throw new Error('Não encontrada');
+    ordemAtual = await res.json();
+    renderOrdem(ordemAtual);
+  } catch (e) {
+    document.getElementById('documento').innerHTML = '<div class="loading"><i class="fas fa-exclamation-circle" style="color:#dc3545;"></i>Ordem não encontrada.</div>';
+  }
+}
+
+function formatarData(d) {
+  if (!d) return '—';
+  const p = d.split('-');
+  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+}
+
+function statusColor(s) {
+  if (s === 'Pendente') return '#ffc107';
+  if (s === 'Em Transporte') return '#0dcaf0';
+  if (s === 'Entregue') return '#198754';
+  if (s === 'Cancelada') return '#dc3545';
+  return '#aaa';
+}
+
+function renderOrdem(o) {
+  document.getElementById('actionTitle').textContent = `${o.oc || ''} — ${o.nomeMotorista || ''}`;
+  document.getElementById('btnDuplicar').onclick = () => {
+    if (confirm(`Duplicar a ordem ${o.oc}?`)) {
+      sessionStorage.setItem('duplicar_ordem', JSON.stringify(o));
+      window.location.href = 'index.html';
+    }
+  };
+
+  const sc = statusColor(o.status);
+
+  document.getElementById('documento').innerHTML = `
+    <!-- CABEÇALHO -->
+    <div class="doc-header">
+      <div class="logo-box">
+        <img src="images/logo.png" alt="Pianetto" onerror="this.parentElement.innerHTML='<span style=\\'font-weight:800;color:#003366;font-size:14px;\\'>PIANETTO</span>'">
+      </div>
+      <div class="header-info">
+        <h1>ORDEM DE COLETA</h1>
+        <p>CNPJ: 43.976.512/0001-09 | INSC. EST: 20.101.161-1<br>
+        ROD. BR 060 KM 388 SALA 139 — RIO VERDE/GO<br>
+        comercial.goianesia@pianettotransportes.com.br</p>
+      </div>
+    </div>
+    <div class="doc-oc-bar">
+      <span>O.C:</span><span class="oc-badge">${o.oc || '—'}</span>
+      <span>PEDIDO:</span><span class="pedido-val">${o.pedido || '—'}</span>
+      <span>DATA:</span><span class="pedido-val">${formatarData(o.dataEmissao)}</span>
+      <span style="margin-left:auto;">
+        <span class="status-badge-doc" style="background:${sc};border-color:${sc};">${o.status || '—'}</span>
+      </span>
+    </div>
+
+    <!-- DADOS DA CARGA -->
+    <div class="section-title"><i class="fas fa-boxes"></i> Dados da Carga</div>
+    <div class="section-body">
+      <div class="data-grid">
+        <div class="data-field"><label>Remetente</label><p>${o.remetente || '—'}</p></div>
+        <div class="data-field"><label>Cidade de Origem</label><p>${o.cidadeOrigem || '—'}</p></div>
+        <div class="data-field"><label>Recebedor</label><p>${o.recebedor || '—'}</p></div>
+        <div class="data-field"><label>Destino</label><p>${o.destino || '—'}</p></div>
+        <div class="data-field"><label>Mercadoria</label><p>${o.mercadoria || '—'}</p></div>
+        <div class="data-field"><label>Peso Bruto</label><p>${o.pesoBruto ? o.pesoBruto + ' kg' : '—'}</p></div>
+        <div class="data-field"><label>Mod. Veículo</label><p>${o.modVeiculo || '—'}</p></div>
+        <div class="data-field"><label>Terminal</label><p>${o.terminal || '—'}</p></div>
+        <div class="data-field"><label>Data Agendamento</label><p>${formatarData(o.dataAgend)}</p></div>
+      </div>
+    </div>
+
+    <!-- DADOS DO VEÍCULO -->
+    <div class="section-title"><i class="fas fa-truck"></i> Dados do Veículo</div>
+    <div class="section-body">
+      <table class="vehicle-table">
+        <thead><tr>
+          <th>Placa Cav.</th><th>Placa Car. 1</th><th>Dolly</th><th>Placa Car. 3</th><th>UF</th>
+        </tr></thead>
+        <tbody><tr>
+          <td>${o.placaCav || '—'}</td>
+          <td>${o.placaCar1 || '—'}</td>
+          <td>${o.dolly || '—'}</td>
+          <td>${o.placaCar3 || '—'}</td>
+          <td>${o.ufVeiculo || '—'}</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+    <!-- DADOS DO MOTORISTA -->
+    <div class="section-title"><i class="fas fa-id-card"></i> Dados do Motorista</div>
+    <div class="section-body">
+      <div class="data-grid">
+        <div class="data-field" style="grid-column:span 2"><label>Nome do Motorista</label><p>${o.nomeMotorista || '—'}</p></div>
+        <div class="data-field"><label>Celular</label><p>${o.celularMotorista || '—'}</p></div>
+        <div class="data-field"><label>CPF</label><p>${o.cpfMotorista || '—'}</p></div>
+        <div class="data-field"><label>RG</label><p>${o.rgMotorista || '—'}</p></div>
+        <div class="data-field"><label>CNH</label><p>${o.cnhMotorista || '—'}</p></div>
+      </div>
+    </div>
+
+    <!-- LOCAL / OBS -->
+    ${o.localColeta || o.observacoes ? `
+    <div class="section-title"><i class="fas fa-map-marker-alt"></i> Local de Coleta / Observações</div>
+    <div class="section-body">
+      ${o.localColeta ? `<div class="data-field" style="margin-bottom:8px;"><label>Local</label><p>${o.localColeta}</p></div>` : ''}
+      ${o.observacoes ? `<div class="data-field"><label>Observações</label><p style="font-weight:400;">${o.observacoes}</p></div>` : ''}
+    </div>` : ''}
+
+    <!-- VALORES -->
+    <div class="section-title"><i class="fas fa-dollar-sign"></i> Valores do Frete</div>
+    <div class="section-body">
+      <div class="valores-grid">
+        <div class="data-field"><label>Peso (KG)</label><p>${o.pesoBruto ? o.pesoBruto + ' kg' : '—'}</p></div>
+        <div class="data-field"><label>Valor / Ton</label><p>${o.valorTon ? 'R$ '+parseFloat(o.valorTon).toFixed(2).replace('.',',') : '—'}</p></div>
+        <div class="valor-destaque"><label>Total Frete</label><p>${o.totalFrete || '—'}</p></div>
+        <div class="data-field"><label>Pedágio</label><p>${o.pedagio ? 'R$ '+parseFloat(o.pedagio).toFixed(2).replace('.',',') : '—'}</p></div>
+        <div class="data-field"><label>Adiantamento</label><p>${o.adiantamento ? 'R$ '+parseFloat(o.adiantamento).toFixed(2).replace('.',',') : '—'}</p></div>
+        <div class="valor-destaque"><label>Saldo a Pagar</label><p>${o.saldoPagar || '—'}</p></div>
+      </div>
+    </div>
+
+    <!-- ASSINATURAS -->
+    <div class="section-title"><i class="fas fa-signature"></i> Assinaturas</div>
+    <div class="assinatura-row">
+      <div class="assinatura-box">
+        <div class="linha">
+          <p>${o.assinaturaMotorista || o.nomeMotorista || '___________________________'}</p>
+          <span>MOTORISTA</span>
+        </div>
+      </div>
+      <div class="assinatura-box">
+        <div class="linha">
+          <p>${o.assinaturaAnalista || 'FLAVIO MIGUEL FERREIRA'}</p>
+          <span>ANALISTA DE LOGÍSTICA</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RODAPÉ -->
+    <div class="doc-footer">
+      <img src="images/logo.png" alt="Pianetto" onerror="this.style.display='none'">
+      <span>PIANETTO TRANSPORTES E LOGÍSTICA | CNPJ: 43.976.512/0001-09 | ROD. BR 060 KM 388 — RIO VERDE/GO</span>
+    </div>
+  `;
+}
+
+document.addEventListener('DOMContentLoaded', carregarOrdem);
+</script>
+</body>
+</html>

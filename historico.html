@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Histórico de Ordens — Pianetto Transportes</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 13px; background: #f0f2f5; color: #222; }
+
+  /* NAVBAR */
+  .navbar {
+    background: linear-gradient(135deg, #003366 0%, #005bb5 100%);
+    padding: 10px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .navbar img { height: 40px; filter: brightness(0) invert(1); }
+  .navbar-links a {
+    color: #fff; text-decoration: none; margin-left: 20px;
+    font-size: 13px; font-weight: 600;
+  }
+  .navbar-links a:hover { text-decoration: underline; }
+
+  /* CONTAINER */
+  .container { max-width: 1200px; margin: 20px auto; padding: 0 15px 40px; }
+
+  /* HEADER PAINEL */
+  .painel-header {
+    background: linear-gradient(135deg, #003366 0%, #005bb5 100%);
+    border-radius: 10px; padding: 20px 24px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 20px;
+    color: #fff;
+  }
+  .logo-box { background: #fff; border-radius: 8px; padding: 8px 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .logo-box img { height: 45px; max-width: 140px; object-fit: contain; }
+  .painel-header h1 { font-size: 20px; font-weight: 800; }
+  .painel-header p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+
+  /* CARDS RESUMO */
+  .cards-resumo { display: flex; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+  .card-resumo {
+    flex: 1; min-width: 150px; background: #fff;
+    border-radius: 10px; padding: 16px 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border-left: 4px solid #ccc;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .card-resumo .icon { font-size: 22px; }
+  .card-resumo .num { font-size: 26px; font-weight: 800; color: #003366; }
+  .card-resumo .lbl { font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase; }
+  .card-total { border-left-color: #003366; }
+  .card-pendente { border-left-color: #ffc107; }
+  .card-transporte { border-left-color: #0dcaf0; }
+  .card-entregue { border-left-color: #198754; }
+
+  /* FILTROS */
+  .filtros-card {
+    background: #fff; border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  }
+  .filtros-card h3 { font-size: 13px; font-weight: 700; color: #003366; margin-bottom: 12px; }
+  .filtros-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+  .filtro-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+  .filtro-field label { font-size: 10px; font-weight: 700; color: #555; text-transform: uppercase; }
+  .filtro-field input, .filtro-field select {
+    border: 1px solid #c8d3df; border-radius: 5px;
+    padding: 7px 10px; font-size: 13px; color: #222; background: #fff;
+  }
+  .filtro-field input:focus, .filtro-field select:focus { outline: none; border-color: #005bb5; }
+  .btn-filtro {
+    background: #003366; color: #fff; border: none;
+    border-radius: 6px; padding: 8px 18px; cursor: pointer;
+    font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-filtro:hover { background: #005bb5; }
+  .btn-limpar-filtro {
+    background: #6c757d; color: #fff; border: none;
+    border-radius: 6px; padding: 8px 14px; cursor: pointer;
+    font-size: 13px; font-weight: 700;
+  }
+
+  /* TABELA */
+  .table-card {
+    background: #fff; border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    overflow: hidden;
+  }
+  .table-toolbar {
+    padding: 12px 16px; display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    border-bottom: 1px solid #e8edf3;
+  }
+  .table-toolbar span { font-size: 13px; font-weight: 700; color: #003366; }
+  .btn-csv {
+    background: #198754; color: #fff; border: none;
+    border-radius: 6px; padding: 7px 14px; cursor: pointer;
+    font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-nova-ordem {
+    background: #003366; color: #fff; border: none;
+    border-radius: 6px; padding: 7px 14px; cursor: pointer;
+    font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px;
+    text-decoration: none;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: #e8edf3; font-size: 11px; font-weight: 700; color: #444;
+    text-transform: uppercase; padding: 9px 10px; text-align: left;
+    border-bottom: 2px solid #d0d8e4; cursor: pointer;
+    white-space: nowrap;
+  }
+  thead th:hover { background: #d8e2ef; }
+  tbody tr { border-bottom: 1px solid #edf1f7; transition: background .15s; }
+  tbody tr:hover { background: #f5f8ff; }
+  tbody td { padding: 9px 10px; vertical-align: middle; }
+
+  /* STATUS BADGE */
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+  }
+  .badge-pendente { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+  .badge-transporte { background: #cff4fc; color: #055160; border: 1px solid #0dcaf0; }
+  .badge-entregue { background: #d1e7dd; color: #0a3622; border: 1px solid #198754; }
+  .badge-cancelada { background: #f8d7da; color: #842029; border: 1px solid #dc3545; }
+
+  /* COLUNA OC */
+  .oc-text { color: #e63946; font-weight: 700; font-size: 12px; }
+
+  /* AÇÕES */
+  .btn-acao {
+    border: none; border-radius: 5px; padding: 5px 10px;
+    cursor: pointer; font-size: 11px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 4px;
+    transition: all .15s; margin: 1px;
+  }
+  .btn-ver { background: #e8edf3; color: #003366; }
+  .btn-ver:hover { background: #d0d8e4; }
+  .btn-pdf { background: #198754; color: #fff; }
+  .btn-pdf:hover { background: #136740; }
+  .btn-duplicar { background: #0077cc; color: #fff; }
+  .btn-duplicar:hover { background: #005fa3; }
+  .btn-excluir { background: #f8d7da; color: #842029; }
+  .btn-excluir:hover { background: #dc3545; color: #fff; }
+
+  /* PAGINAÇÃO */
+  .paginacao {
+    padding: 12px 16px; display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    border-top: 1px solid #e8edf3;
+  }
+  .paginacao span { font-size: 12px; color: #666; }
+  .pag-btns { display: flex; gap: 4px; }
+  .pag-btn {
+    border: 1px solid #d0d8e4; background: #fff; color: #003366;
+    border-radius: 5px; padding: 5px 10px; cursor: pointer;
+    font-size: 12px; font-weight: 700;
+  }
+  .pag-btn.ativo { background: #003366; color: #fff; border-color: #003366; }
+  .pag-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* RODAPÉ */
+  .painel-footer {
+    background: linear-gradient(135deg, #003366 0%, #005bb5 100%);
+    border-radius: 0 0 10px 10px;
+    padding: 10px 24px;
+    display: flex; align-items: center; gap: 14px;
+    color: rgba(255,255,255,0.85); font-size: 11px;
+    margin-top: 6px;
+  }
+  .painel-footer img { height: 28px; filter: brightness(0) invert(1); opacity: 0.8; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1000;
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: #fff; border-radius: 12px; width: 100%;
+    max-width: 720px; max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  }
+  .modal-header {
+    background: linear-gradient(135deg, #003366 0%, #005bb5 100%);
+    padding: 16px 20px; display: flex; align-items: center;
+    justify-content: space-between; border-radius: 12px 12px 0 0;
+  }
+  .modal-header-left { display: flex; align-items: center; gap: 14px; }
+  .modal-header-left img { height: 36px; filter: brightness(0) invert(1); }
+  .modal-header h2 { color: #fff; font-size: 16px; }
+  .modal-header .oc-modal { color: #fff; font-size: 12px; opacity: .85; }
+  .modal-close {
+    background: none; border: none; color: #fff;
+    font-size: 20px; cursor: pointer; opacity: .8;
+  }
+  .modal-body { padding: 20px; }
+  .modal-section { margin-bottom: 16px; }
+  .modal-section h4 {
+    font-size: 11px; font-weight: 700; color: #003366;
+    text-transform: uppercase; letter-spacing: .5px;
+    border-bottom: 1px solid #e8edf3; padding-bottom: 6px; margin-bottom: 10px;
+  }
+  .modal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .modal-field label { font-size: 10px; color: #888; font-weight: 700; text-transform: uppercase; }
+  .modal-field p { font-size: 13px; color: #222; font-weight: 600; margin-top: 2px; }
+  .modal-footer { padding: 14px 20px; border-top: 1px solid #e8edf3; display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+  /* STATUS SELECT NO MODAL */
+  .status-modal-select {
+    border: 1.5px solid #d0d8e4; border-radius: 6px;
+    padding: 7px 12px; font-size: 13px; font-weight: 700;
+    cursor: pointer; width: 200px;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: #888;
+  }
+  .empty-state i { font-size: 40px; margin-bottom: 12px; color: #ccc; }
+  .empty-state p { font-size: 14px; }
+
+  /* LOADING */
+  .loading { text-align: center; padding: 40px; color: #666; }
+  .loading i { font-size: 24px; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <img src="images/logo.png" alt="Pianetto Transportes" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+  <span style="display:none;color:#fff;font-weight:800;font-size:16px;">PIANETTO TRANSPORTES</span>
+  <div class="navbar-links">
+    <a href="index.html"><i class="fas fa-file-alt"></i> Nova Ordem</a>
+    <a href="historico.html"><i class="fas fa-list"></i> Histórico</a>
+  </div>
+</nav>
+
+<div class="container">
+  <!-- HEADER -->
+  <div class="painel-header">
+    <div class="logo-box">
+      <img src="images/logo.png" alt="Pianetto" onerror="this.parentElement.innerHTML='<span style=\'font-weight:800;color:#003366;font-size:14px;\'>PIANETTO</span>'">
+    </div>
+    <div>
+      <h1>Histórico de Ordens</h1>
+      <p>Pianetto Transportes e Logística | CNPJ: 43.976.512/0001-09</p>
+    </div>
+  </div>
+
+  <!-- CARDS RESUMO -->
+  <div class="cards-resumo">
+    <div class="card-resumo card-total">
+      <div class="icon" style="color:#003366;"><i class="fas fa-file-alt"></i></div>
+      <div><div class="num" id="totalOrdens">0</div><div class="lbl">Total de Ordens</div></div>
+    </div>
+    <div class="card-resumo card-pendente">
+      <div class="icon" style="color:#ffc107;"><i class="fas fa-clock"></i></div>
+      <div><div class="num" id="totalPendente">0</div><div class="lbl">Pendentes</div></div>
+    </div>
+    <div class="card-resumo card-transporte">
+      <div class="icon" style="color:#0dcaf0;"><i class="fas fa-truck"></i></div>
+      <div><div class="num" id="totalTransporte">0</div><div class="lbl">Em Transporte</div></div>
+    </div>
+    <div class="card-resumo card-entregue">
+      <div class="icon" style="color:#198754;"><i class="fas fa-check-circle"></i></div>
+      <div><div class="num" id="totalEntregue">0</div><div class="lbl">Entregues</div></div>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filtros-card">
+    <h3><i class="fas fa-filter"></i> Filtros</h3>
+    <div class="filtros-row">
+      <div class="filtro-field" style="flex:2;">
+        <label>Busca (pedido, motorista, remetente, placa...)</label>
+        <input type="text" id="filtroTexto" placeholder="Digite para buscar..." oninput="aplicarFiltros()">
+      </div>
+      <div class="filtro-field">
+        <label>Status</label>
+        <select id="filtroStatus" onchange="aplicarFiltros()">
+          <option value="">Todos</option>
+          <option value="Pendente">Pendente</option>
+          <option value="Em Transporte">Em Transporte</option>
+          <option value="Entregue">Entregue</option>
+          <option value="Cancelada">Cancelada</option>
+        </select>
+      </div>
+      <div class="filtro-field">
+        <label>Data Inicial</label>
+        <input type="date" id="filtroDataIni" onchange="aplicarFiltros()">
+      </div>
+      <div class="filtro-field">
+        <label>Data Final</label>
+        <input type="date" id="filtroDataFim" onchange="aplicarFiltros()">
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end;">
+        <button class="btn-limpar-filtro" onclick="limparFiltros()"><i class="fas fa-times"></i> Limpar</button>
+        <button class="btn-filtro" onclick="carregarOrdens()"><i class="fas fa-sync"></i> Atualizar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABELA -->
+  <div class="table-card">
+    <div class="table-toolbar">
+      <span id="labelResultados">Carregando...</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-csv" onclick="exportarCSV()"><i class="fas fa-file-csv"></i> Exportar CSV</button>
+        <a href="index.html" class="btn-nova-ordem"><i class="fas fa-plus"></i> Nova Ordem</a>
+      </div>
+    </div>
+
+    <div id="tabelaContainer">
+      <div class="loading"><i class="fas fa-spinner"></i> Carregando ordens...</div>
+    </div>
+
+    <div class="paginacao" id="paginacaoContainer" style="display:none;">
+      <span id="labelPaginacao"></span>
+      <div class="pag-btns" id="paginaBtns"></div>
+    </div>
+  </div>
+
+  <div class="painel-footer">
+    <img src="images/logo.png" alt="Pianetto" onerror="this.style.display='none'">
+    <span>PIANETTO TRANSPORTES E LOGÍSTICA | CNPJ: 43.976.512/0001-09 | ROD. BR 060 KM 388 — RIO VERDE/GO</span>
+  </div>
+</div>
+
+<!-- MODAL DE DETALHES -->
+<div class="modal-overlay" id="modalOverlay" onclick="fecharModalExterno(event)">
+  <div class="modal-box" id="modalBox">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <img src="images/logo.png" alt="Pianetto" onerror="this.style.display='none'">
+        <div>
+          <h2>Detalhes da Ordem</h2>
+          <span class="oc-modal" id="modalOC"></span>
+        </div>
+      </div>
+      <button class="modal-close" onclick="fecharModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn-acao btn-duplicar" onclick="duplicarOrdemModal()"><i class="fas fa-copy"></i> Duplicar Ordem</button>
+      <button class="btn-acao btn-pdf" onclick="imprimirOrdemModal()"><i class="fas fa-print"></i> Reimprimir / PDF</button>
+      <button class="btn-acao btn-excluir" onclick="excluirOrdemModal()"><i class="fas fa-trash"></i> Excluir</button>
+      <button class="btn-acao btn-ver" onclick="fecharModal()"><i class="fas fa-times"></i> Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let todasOrdens = [];
+let ordensFiltradas = [];
+let ordenAtual = null;
+let paginaAtual = 1;
+const POR_PAGINA = 15;
+let sortCampo = 'created_at';
+let sortAsc = false;
+
+// ===================== CARREGAR =====================
+async function carregarOrdens() {
+  document.getElementById('tabelaContainer').innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Carregando ordens...</div>';
+  try {
+    const res = await fetch('tables/ordens?limit=1000&sort=created_at');
+    if (!res.ok) throw new Error('Erro ao buscar');
+    const json = await res.json();
+    todasOrdens = json.data || [];
+    atualizarCards();
+    aplicarFiltros();
+  } catch (e) {
+    document.getElementById('tabelaContainer').innerHTML =
+      '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Não foi possível carregar as ordens.<br>Verifique a conexão com o banco de dados.</p></div>';
+    document.getElementById('labelResultados').textContent = 'Erro ao carregar';
+  }
+}
+
+function atualizarCards() {
+  document.getElementById('totalOrdens').textContent = todasOrdens.length;
+  document.getElementById('totalPendente').textContent = todasOrdens.filter(o => o.status === 'Pendente').length;
+  document.getElementById('totalTransporte').textContent = todasOrdens.filter(o => o.status === 'Em Transporte').length;
+  document.getElementById('totalEntregue').textContent = todasOrdens.filter(o => o.status === 'Entregue').length;
+}
+
+// ===================== FILTROS =====================
+function aplicarFiltros() {
+  const texto = document.getElementById('filtroTexto').value.toLowerCase();
+  const status = document.getElementById('filtroStatus').value;
+  const dataIni = document.getElementById('filtroDataIni').value;
+  const dataFim = document.getElementById('filtroDataFim').value;
+
+  ordensFiltradas = todasOrdens.filter(o => {
+    if (texto) {
+      const campos = [o.pedido, o.oc, o.nomeMotorista, o.remetente, o.recebedor,
+        o.destino, o.placaCav, o.placaCar1, o.mercadoria].join(' ').toLowerCase();
+      if (!campos.includes(texto)) return false;
+    }
+    if (status && o.status !== status) return false;
+    if (dataIni && o.dataEmissao < dataIni) return false;
+    if (dataFim && o.dataEmissao > dataFim) return false;
+    return true;
+  });
+
+  // Sort
+  ordensFiltradas.sort((a, b) => {
+    const va = a[sortCampo] || '';
+    const vb = b[sortCampo] || '';
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+
+  paginaAtual = 1;
+  renderTabela();
+}
+
+function limparFiltros() {
+  document.getElementById('filtroTexto').value = '';
+  document.getElementById('filtroStatus').value = '';
+  document.getElementById('filtroDataIni').value = '';
+  document.getElementById('filtroDataFim').value = '';
+  aplicarFiltros();
+}
+
+// ===================== TABELA =====================
+function renderTabela() {
+  const total = ordensFiltradas.length;
+  const totalPag = Math.ceil(total / POR_PAGINA);
+  const inicio = (paginaAtual - 1) * POR_PAGINA;
+  const fim = Math.min(inicio + POR_PAGINA, total);
+  const pagina = ordensFiltradas.slice(inicio, fim);
+
+  document.getElementById('labelResultados').textContent =
+    `Mostrando ${total > 0 ? inicio + 1 : 0}–${fim} de ${total} ordem(ns)`;
+
+  if (total === 0) {
+    document.getElementById('tabelaContainer').innerHTML =
+      '<div class="empty-state"><i class="fas fa-inbox"></i><p>Nenhuma ordem encontrada com os filtros selecionados.</p></div>';
+    document.getElementById('paginacaoContainer').style.display = 'none';
+    return;
+  }
+
+  let html = `<table>
+    <thead><tr>
+      <th onclick="sortBy('oc')">O.C <i class="fas fa-sort"></i></th>
+      <th onclick="sortBy('pedido')">Pedido <i class="fas fa-sort"></i></th>
+      <th onclick="sortBy('dataEmissao')">Data <i class="fas fa-sort"></i></th>
+      <th onclick="sortBy('remetente')">Remetente <i class="fas fa-sort"></i></th>
+      <th onclick="sortBy('destino')">Destino <i class="fas fa-sort"></i></th>
+      <th onclick="sortBy('nomeMotorista')">Motorista <i class="fas fa-sort"></i></th>
+      <th onclick="sortBy('placaCav')">Placa <i class="fas fa-sort"></i></th>
+      <th onclick="sortBy('status')">Status <i class="fas fa-sort"></i></th>
+      <th>Ações</th>
+    </tr></thead>
+    <tbody>`;
+
+  pagina.forEach(o => {
+    const badgeClass = badgePorStatus(o.status);
+    html += `<tr>
+      <td class="oc-text">${o.oc || '-'}</td>
+      <td>${o.pedido || '-'}</td>
+      <td>${formatarData(o.dataEmissao)}</td>
+      <td>${o.remetente || '-'}</td>
+      <td>${o.destino || '-'}</td>
+      <td>${o.nomeMotorista || '-'}</td>
+      <td>${o.placaCav || '-'}</td>
+      <td><span class="badge ${badgeClass}">${o.status || '-'}</span></td>
+      <td>
+        <button class="btn-acao btn-ver" onclick="verDetalhes('${o.id}')"><i class="fas fa-eye"></i> Ver</button>
+        <button class="btn-acao btn-pdf" onclick="imprimirOrdem('${o.id}')"><i class="fas fa-print"></i> PDF</button>
+        <button class="btn-acao btn-duplicar" onclick="duplicarOrdem('${o.id}')"><i class="fas fa-copy"></i></button>
+        <button class="btn-acao btn-excluir" onclick="excluirOrdem('${o.id}')"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('tabelaContainer').innerHTML = html;
+
+  // Paginação
+  const pagContainer = document.getElementById('paginacaoContainer');
+  const pagBtns = document.getElementById('paginaBtns');
+  document.getElementById('labelPaginacao').textContent = `Página ${paginaAtual} de ${totalPag}`;
+
+  let btnsHtml = `<button class="pag-btn" onclick="irPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
+  const maxBtns = 5;
+  let startP = Math.max(1, paginaAtual - 2);
+  let endP = Math.min(totalPag, startP + maxBtns - 1);
+  if (endP - startP < maxBtns - 1) startP = Math.max(1, endP - maxBtns + 1);
+  for (let i = startP; i <= endP; i++) {
+    btnsHtml += `<button class="pag-btn ${i === paginaAtual ? 'ativo' : ''}" onclick="irPagina(${i})">${i}</button>`;
+  }
+  btnsHtml += `<button class="pag-btn" onclick="irPagina(${paginaAtual + 1})" ${paginaAtual === totalPag ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
+  pagBtns.innerHTML = btnsHtml;
+  pagContainer.style.display = 'flex';
+}
+
+function irPagina(p) {
+  const total = Math.ceil(ordensFiltradas.length / POR_PAGINA);
+  if (p < 1 || p > total) return;
+  paginaAtual = p;
+  renderTabela();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function sortBy(campo) {
+  if (sortCampo === campo) sortAsc = !sortAsc;
+  else { sortCampo = campo; sortAsc = true; }
+  aplicarFiltros();
+}
+
+// ===================== UTILITÁRIOS =====================
+function badgePorStatus(s) {
+  if (s === 'Pendente') return 'badge-pendente';
+  if (s === 'Em Transporte') return 'badge-transporte';
+  if (s === 'Entregue') return 'badge-entregue';
+  if (s === 'Cancelada') return 'badge-cancelada';
+  return '';
+}
+
+function formatarData(d) {
+  if (!d) return '-';
+  const parts = d.split('-');
+  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return d;
+}
+
+function formatarMoeda(v) {
+  if (!v) return '-';
+  return String(v).startsWith('R$') ? v : `R$ ${v}`;
+}
+
+// ===================== DETALHES =====================
+function verDetalhes(id) {
+  ordenAtual = todasOrdens.find(o => o.id === id);
+  if (!ordenAtual) return;
+
+  const o = ordenAtual;
+  document.getElementById('modalOC').textContent = `O.C: ${o.oc || '-'} | Pedido: ${o.pedido || '-'}`;
+
+  const badgeClass = badgePorStatus(o.status);
+  const html = `
+    <div class="modal-section">
+      <h4><i class="fas fa-info-circle"></i> Identificação</h4>
+      <div class="modal-grid">
+        <div class="modal-field"><label>O.C</label><p class="oc-text">${o.oc || '-'}</p></div>
+        <div class="modal-field"><label>Pedido</label><p>${o.pedido || '-'}</p></div>
+        <div class="modal-field"><label>Data de Emissão</label><p>${formatarData(o.dataEmissao)}</p></div>
+        <div class="modal-field"><label>Status</label>
+          <select class="status-modal-select" onchange="alterarStatus('${o.id}', this.value)">
+            <option ${o.status==='Pendente'?'selected':''}>Pendente</option>
+            <option ${o.status==='Em Transporte'?'selected':''}>Em Transporte</option>
+            <option ${o.status==='Entregue'?'selected':''}>Entregue</option>
+            <option ${o.status==='Cancelada'?'selected':''}>Cancelada</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-section">
+      <h4><i class="fas fa-boxes"></i> Dados da Carga</h4>
+      <div class="modal-grid">
+        <div class="modal-field"><label>Remetente</label><p>${o.remetente || '-'}</p></div>
+        <div class="modal-field"><label>Cidade de Origem</label><p>${o.cidadeOrigem || '-'}</p></div>
+        <div class="modal-field"><label>Recebedor</label><p>${o.recebedor || '-'}</p></div>
+        <div class="modal-field"><label>Destino</label><p>${o.destino || '-'}</p></div>
+        <div class="modal-field"><label>Mercadoria</label><p>${o.mercadoria || '-'}</p></div>
+        <div class="modal-field"><label>Peso Bruto</label><p>${o.pesoBruto ? o.pesoBruto + ' kg' : '-'}</p></div>
+        <div class="modal-field"><label>Mod. Veículo</label><p>${o.modVeiculo || '-'}</p></div>
+        <div class="modal-field"><label>Data Agend.</label><p>${formatarData(o.dataAgend)}</p></div>
+      </div>
+    </div>
+    <div class="modal-section">
+      <h4><i class="fas fa-truck"></i> Veículo</h4>
+      <div class="modal-grid">
+        <div class="modal-field"><label>Placa Cav.</label><p>${o.placaCav || '-'}</p></div>
+        <div class="modal-field"><label>Car. 1</label><p>${o.placaCar1 || '-'}</p></div>
+        <div class="modal-field"><label>Dolly</label><p>${o.dolly || '-'}</p></div>
+        <div class="modal-field"><label>Car. 3</label><p>${o.placaCar3 || '-'}</p></div>
+        <div class="modal-field"><label>UF</label><p>${o.ufVeiculo || '-'}</p></div>
+      </div>
+    </div>
+    <div class="modal-section">
+      <h4><i class="fas fa-id-card"></i> Motorista</h4>
+      <div class="modal-grid">
+        <div class="modal-field"><label>Nome</label><p>${o.nomeMotorista || '-'}</p></div>
+        <div class="modal-field"><label>Celular</label><p>${o.celularMotorista || '-'}</p></div>
+        <div class="modal-field"><label>CPF</label><p>${o.cpfMotorista || '-'}</p></div>
+        <div class="modal-field"><label>RG</label><p>${o.rgMotorista || '-'}</p></div>
+        <div class="modal-field"><label>CNH</label><p>${o.cnhMotorista || '-'}</p></div>
+      </div>
+    </div>
+    <div class="modal-section">
+      <h4><i class="fas fa-dollar-sign"></i> Valores do Frete</h4>
+      <div class="modal-grid">
+        <div class="modal-field"><label>Total Frete</label><p>${formatarMoeda(o.totalFrete)}</p></div>
+        <div class="modal-field"><label>Pedágio</label><p>${o.pedagio ? 'R$ '+o.pedagio : '-'}</p></div>
+        <div class="modal-field"><label>Adiantamento</label><p>${o.adiantamento ? 'R$ '+o.adiantamento : '-'}</p></div>
+        <div class="modal-field"><label>Saldo a Pagar</label><p><strong>${formatarMoeda(o.saldoPagar)}</strong></p></div>
+      </div>
+    </div>
+    ${o.observacoes ? `<div class="modal-section"><h4><i class="fas fa-comment"></i> Observações</h4><p style="font-size:13px;">${o.observacoes}</p></div>` : ''}
+  `;
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function fecharModal() { document.getElementById('modalOverlay').classList.remove('open'); ordenAtual = null; }
+function fecharModalExterno(e) { if (e.target === document.getElementById('modalOverlay')) fecharModal(); }
+
+// ===================== ALTERAR STATUS =====================
+async function alterarStatus(id, novoStatus) {
+  try {
+    await fetch(`tables/ordens/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: novoStatus })
+    });
+    const o = todasOrdens.find(o => o.id === id);
+    if (o) o.status = novoStatus;
+    atualizarCards();
+    aplicarFiltros();
+  } catch (e) { alert('Erro ao atualizar status.'); }
+}
+
+// ===================== IMPRIMIR =====================
+function imprimirOrdem(id) {
+  window.open(`print.html?id=${id}`, '_blank');
+}
+function imprimirOrdemModal() {
+  if (ordenAtual) window.open(`print.html?id=${ordenAtual.id}`, '_blank');
+}
+
+// ===================== DUPLICAR =====================
+function duplicarOrdem(id) {
+  const o = todasOrdens.find(o => o.id === id);
+  if (!o) return;
+  if (!confirm(`Duplicar a ordem ${o.oc || o.pedido}?`)) return;
+  sessionStorage.setItem('duplicar_ordem', JSON.stringify(o));
+  window.location.href = 'index.html';
+}
+function duplicarOrdemModal() {
+  if (ordenAtual) {
+    fecharModal();
+    duplicarOrdem(ordenAtual.id);
+  }
+}
+
+// ===================== EXCLUIR =====================
+async function excluirOrdem(id) {
+  if (!confirm('Excluir esta ordem permanentemente?')) return;
+  try {
+    await fetch(`tables/ordens/${id}`, { method: 'DELETE' });
+    todasOrdens = todasOrdens.filter(o => o.id !== id);
+    atualizarCards();
+    aplicarFiltros();
+  } catch (e) { alert('Erro ao excluir ordem.'); }
+}
+function excluirOrdemModal() {
+  if (ordenAtual) {
+    fecharModal();
+    excluirOrdem(ordenAtual.id);
+  }
+}
+
+// ===================== CSV =====================
+function exportarCSV() {
+  if (ordensFiltradas.length === 0) { alert('Nenhuma ordem para exportar.'); return; }
+  const campos = ['oc','pedido','dataEmissao','status','remetente','cidadeOrigem','recebedor','destino',
+    'mercadoria','pesoBruto','modVeiculo','placaCav','placaCar1','dolly','placaCar3','ufVeiculo',
+    'nomeMotorista','celularMotorista','cpfMotorista','totalFrete','pedagio','adiantamento','saldoPagar'];
+  const headers = ['O.C','Pedido','Data Emissão','Status','Remetente','Cidade Origem','Recebedor','Destino',
+    'Mercadoria','Peso Bruto','Mod. Veículo','Placa Cav','Placa Car1','Dolly','Placa Car3','UF',
+    'Motorista','Celular','CPF','Total Frete','Pedágio','Adiantamento','Saldo a Pagar'];
+  const rows = ordensFiltradas.map(o => campos.map(c => `"${(o[c] || '').toString().replace(/"/g, '""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ordens_pianetto_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', carregarOrdens);
+</script>
+</body>
+</html>

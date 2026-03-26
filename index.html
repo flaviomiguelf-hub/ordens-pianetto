@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ordem de Coleta — Pianetto Transportes</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 13px; background: #f0f2f5; color: #222; }
+
+  /* NAVBAR */
+  .navbar {
+    background: linear-gradient(135deg, #003366 0%, #005bb5 100%);
+    padding: 10px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .navbar img { height: 40px; filter: brightness(0) invert(1); }
+  .navbar-links a {
+    color: #fff; text-decoration: none; margin-left: 20px;
+    font-size: 13px; font-weight: 600;
+  }
+  .navbar-links a:hover { text-decoration: underline; }
+
+  /* CONTAINER */
+  .container { max-width: 900px; margin: 20px auto; padding: 0 15px 40px; }
+
+  /* BANNER DUPLICAÇÃO */
+  .banner-duplicado {
+    background: #fff3cd; border: 2px solid #ffc107;
+    border-radius: 8px; padding: 12px 18px; margin-bottom: 16px;
+    display: none; align-items: center; gap: 12px;
+  }
+  .banner-duplicado.ativo { display: flex; }
+  .banner-duplicado i { color: #e65c00; font-size: 20px; }
+  .banner-duplicado span { flex: 1; font-size: 13px; color: #7a4f00; font-weight: 600; }
+  .btn-desbloquear-todos {
+    background: #e65c00; color: #fff; border: none;
+    padding: 6px 14px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 700;
+  }
+
+  /* CABEÇALHO DO FORMULÁRIO */
+  .form-header {
+    background: linear-gradient(135deg, #003366 0%, #005bb5 100%);
+    border-radius: 10px 10px 0 0;
+    padding: 20px 24px;
+    display: flex; align-items: center; gap: 20px;
+    color: #fff;
+  }
+  .logo-box {
+    background: #fff; border-radius: 8px;
+    padding: 8px 14px; display: flex; align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    min-width: 160px; justify-content: center;
+  }
+  .logo-box img { height: 55px; max-width: 160px; object-fit: contain; }
+  .header-info h1 { font-size: 20px; font-weight: 800; letter-spacing: 1px; }
+  .header-info p { font-size: 11px; opacity: 0.85; margin-top: 3px; line-height: 1.5; }
+  .header-oc-bar {
+    background: rgba(255,255,255,0.15);
+    padding: 8px 24px; display: flex; gap: 24px; align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.2);
+  }
+  .oc-badge {
+    background: #e63946; color: #fff;
+    font-size: 13px; font-weight: 800; padding: 4px 14px; border-radius: 20px;
+    letter-spacing: 1px;
+  }
+  .pedido-field {
+    display: flex; align-items: center; gap: 8px; color: #fff;
+    font-size: 13px; font-weight: 600;
+  }
+  .pedido-input {
+    background: transparent; border: none; border-bottom: 2px dashed #7ec8e3;
+    color: #fff; font-size: 13px; font-weight: 700; width: 170px;
+    outline: none; padding: 2px 4px;
+  }
+  .pedido-input::placeholder { color: rgba(255,255,255,0.5); }
+
+  /* CARD */
+  .card {
+    background: #fff; border: 1px solid #dce3ec;
+    border-radius: 0 0 10px 10px; padding: 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .section-title {
+    background: #003366; color: #fff;
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    padding: 6px 16px; text-transform: uppercase;
+  }
+  .section-body { padding: 14px 20px; }
+
+  /* GRID */
+  .row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+  .field { display: flex; flex-direction: column; flex: 1; min-width: 160px; }
+  .field label { font-size: 10px; font-weight: 700; color: #555; text-transform: uppercase; margin-bottom: 3px; }
+  .field input, .field select, .field textarea {
+    border: 1px solid #c8d3df; border-radius: 5px;
+    padding: 7px 10px; font-size: 13px; color: #222;
+    background: #fff; transition: border .2s;
+    font-family: Arial, sans-serif;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none; border-color: #005bb5;
+  }
+  .field input[readonly], .field input.bloqueado, .field select.bloqueado {
+    background: #fff8e1; border: 1.5px dashed #e65c00;
+    cursor: not-allowed; color: #7a4f00;
+  }
+  .field-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+  .btn-unlock {
+    background: none; border: none; color: #e65c00; cursor: pointer;
+    font-size: 10px; font-weight: 700; padding: 0 4px;
+  }
+  .btn-unlock:hover { text-decoration: underline; }
+
+  /* TABELA DE VEÍCULOS */
+  .vehicle-table { width: 100%; border-collapse: collapse; }
+  .vehicle-table th {
+    background: #e8edf3; font-size: 10px; font-weight: 700;
+    color: #444; text-transform: uppercase; padding: 7px 10px; text-align: left;
+    border: 1px solid #d0d8e4;
+  }
+  .vehicle-table td { padding: 5px; border: 1px solid #d0d8e4; }
+  .vehicle-table td input {
+    border: none; padding: 5px 8px; font-size: 13px; width: 100%;
+    background: transparent; text-transform: uppercase;
+  }
+  .vehicle-table td input:focus { outline: none; background: #f0f6ff; }
+  .vehicle-table td input.bloqueado {
+    background: #fff8e1 !important; cursor: not-allowed; color: #7a4f00;
+  }
+
+  /* VALORES */
+  .valor-calculated {
+    background: #e8f4fd !important; border-color: #005bb5 !important;
+    font-weight: 700; color: #003366 !important;
+  }
+
+  /* ASSINATURAS */
+  .assinatura-row { display: flex; gap: 20px; padding: 20px; }
+  .assinatura-box {
+    flex: 1; border-top: 2px solid #333;
+    text-align: center; padding-top: 6px; font-size: 12px;
+    font-weight: 700; color: #333; text-transform: uppercase;
+  }
+
+  /* RODAPÉ DO FORMULÁRIO */
+  .form-footer {
+    background: linear-gradient(135deg, #003366 0%, #005bb5 100%);
+    border-radius: 0 0 10px 10px;
+    padding: 10px 24px;
+    display: flex; align-items: center; gap: 14px;
+    color: rgba(255,255,255,0.85); font-size: 11px;
+  }
+  .form-footer img { height: 28px; filter: brightness(0) invert(1); opacity: 0.8; }
+
+  /* BOTÕES */
+  .btn-row { display: flex; gap: 12px; justify-content: flex-end; padding: 16px 20px; flex-wrap: wrap; }
+  .btn {
+    border: none; border-radius: 6px; padding: 10px 22px;
+    font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px;
+    transition: all .2s;
+  }
+  .btn-primary { background: #003366; color: #fff; }
+  .btn-primary:hover { background: #005bb5; }
+  .btn-success { background: #198754; color: #fff; }
+  .btn-success:hover { background: #136740; }
+  .btn-danger { background: #dc3545; color: #fff; }
+  .btn-danger:hover { background: #a71d2a; }
+  .btn-secondary { background: #6c757d; color: #fff; }
+  .btn-secondary:hover { background: #495057; }
+
+  /* STATUS BADGE */
+  .status-select { font-weight: 700; }
+  .status-pendente { border-color: #ffc107 !important; color: #856404 !important; background: #fff9e6 !important; }
+  .status-transporte { border-color: #0dcaf0 !important; color: #055160 !important; background: #e6f9fd !important; }
+  .status-entregue { border-color: #198754 !important; color: #0a3622 !important; background: #e6f9ef !important; }
+  .status-cancelada { border-color: #dc3545 !important; color: #842029 !important; background: #fde6e8 !important; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background: #003366; color: #fff; padding: 14px 24px;
+    border-radius: 8px; font-size: 14px; font-weight: 600;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    display: none; align-items: center; gap: 10px;
+  }
+  .toast.show { display: flex; }
+
+  /* PRINT */
+  @media print {
+    .navbar, .btn-row, .banner-duplicado, .btn-unlock, .form-footer { display: none !important; }
+    body { background: #fff; }
+    .container { max-width: 100%; padding: 0; margin: 0; }
+    .card { box-shadow: none; border: none; }
+    .form-header { border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <img src="images/logo.png" alt="Pianetto Transportes" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+  <span style="display:none;color:#fff;font-weight:800;font-size:16px;">PIANETTO TRANSPORTES</span>
+  <div class="navbar-links">
+    <a href="index.html"><i class="fas fa-file-alt"></i> Nova Ordem</a>
+    <a href="historico.html"><i class="fas fa-list"></i> Histórico</a>
+  </div>
+</nav>
+
+<!-- BANNER DUPLICADO -->
+<div class="container">
+  <div class="banner-duplicado" id="bannerDuplicado">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span id="bannerDuplicadoTexto">Esta é uma cópia da ordem. Campos importantes estão bloqueados.</span>
+    <button class="btn-desbloquear-todos" onclick="desbloquearTodos()">🔓 Desbloquear Todos</button>
+  </div>
+
+  <!-- CABEÇALHO DO FORMULÁRIO -->
+  <div class="form-header">
+    <div class="logo-box">
+      <img src="images/logo.png" alt="Pianetto" onerror="this.parentElement.innerHTML='<span style=\'font-weight:800;color:#003366;font-size:14px;\'>PIANETTO</span>'">
+    </div>
+    <div class="header-info">
+      <h1>ORDEM DE COLETA</h1>
+      <p>CNPJ: 43.976.512/0001-09 | INSC. EST: 20.101.161-1<br>
+      ROD. BR 060 KM 388 SALA 139 — RIO VERDE/GO<br>
+      comercial.goianesia@pianettotransportes.com.br</p>
+    </div>
+  </div>
+  <div class="header-oc-bar" style="background: rgba(0,51,102,0.85); display:flex; gap:24px; align-items:center; padding:8px 24px; flex-wrap:wrap;">
+    <div class="pedido-field">
+      <span>PEDIDO:</span>
+      <input type="text" class="pedido-input" id="numeroPedido" placeholder="PEDIDO-2026-0001">
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;color:#fff;font-size:13px;font-weight:600;">
+      <span>O.C:</span>
+      <span class="oc-badge" id="numeroOC">OC-2026-0001</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;color:#fff;font-size:13px;font-weight:600;">
+      <span>Data de Emissão:</span>
+      <input type="date" id="dataEmissao" style="background:transparent;border:none;border-bottom:2px dashed #7ec8e3;color:#fff;font-size:13px;font-weight:700;outline:none;padding:2px 4px;" readonly>
+    </div>
+  </div>
+
+  <!-- CARD PRINCIPAL -->
+  <div class="card">
+
+    <!-- DADOS DA CARGA -->
+    <div class="section-title"><i class="fas fa-boxes"></i> Dados da Carga</div>
+    <div class="section-body">
+      <div class="row">
+        <div class="field" style="min-width:260px;">
+          <div class="field-label-row">
+            <label>Remetente</label>
+            <button class="btn-unlock bloqueavel" data-campo="remetente" onclick="desbloquearCampo('remetente')" style="display:none;">🔓 Desbloquear</button>
+          </div>
+          <input type="text" id="remetente" placeholder="Nome do remetente">
+        </div>
+        <div class="field">
+          <div class="field-label-row">
+            <label>Cidade de Origem</label>
+            <button class="btn-unlock bloqueavel" data-campo="cidadeOrigem" onclick="desbloquearCampo('cidadeOrigem')" style="display:none;">🔓 Desbloquear</button>
+          </div>
+          <input type="text" id="cidadeOrigem" placeholder="Cidade / UF">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field" style="min-width:260px;">
+          <div class="field-label-row">
+            <label>Recebedor</label>
+            <button class="btn-unlock bloqueavel" data-campo="recebedor" onclick="desbloquearCampo('recebedor')" style="display:none;">🔓 Desbloquear</button>
+          </div>
+          <input type="text" id="recebedor" placeholder="Nome do recebedor">
+        </div>
+        <div class="field">
+          <div class="field-label-row">
+            <label>Destino</label>
+            <button class="btn-unlock bloqueavel" data-campo="destino" onclick="desbloquearCampo('destino')" style="display:none;">🔓 Desbloquear</button>
+          </div>
+          <input type="text" id="destino" placeholder="Cidade de destino">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <div class="field-label-row">
+            <label>Mercadoria</label>
+            <button class="btn-unlock bloqueavel" data-campo="mercadoria" onclick="desbloquearCampo('mercadoria')" style="display:none;">🔓 Desbloquear</button>
+          </div>
+          <input type="text" id="mercadoria" placeholder="Tipo de mercadoria">
+        </div>
+        <div class="field">
+          <div class="field-label-row">
+            <label>Peso Bruto (kg)</label>
+            <button class="btn-unlock bloqueavel" data-campo="pesoBruto" onclick="desbloquearCampo('pesoBruto')" style="display:none;">🔓 Desbloquear</button>
+          </div>
+          <input type="number" id="pesoBruto" placeholder="0" oninput="calcularFrete()">
+        </div>
+        <div class="field">
+          <label>Mod. Veículo</label>
+          <select id="modVeiculo">
+            <option value="">Selecione...</option>
+            <option>RODOCAÇAMBA</option>
+            <option>CARRETA</option>
+            <option>VANDERLEIA</option>
+            <option>BITREM</option>
+            <option>TRITREM</option>
+            <option>TOCO</option>
+            <option>TRUCK</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Terminal</label>
+          <input type="text" id="terminal" placeholder="Terminal de origem">
+        </div>
+        <div class="field">
+          <label>Data de Agendamento</label>
+          <input type="date" id="dataAgend">
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="statusOrdem" class="status-select status-pendente" onchange="atualizarStyleStatus()">
+            <option value="Pendente">Pendente</option>
+            <option value="Em Transporte">Em Transporte</option>
+            <option value="Entregue">Entregue</option>
+            <option value="Cancelada">Cancelada</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- DADOS DO VEÍCULO -->
+    <div class="section-title"><i class="fas fa-truck"></i> Dados do Veículo</div>
+    <div class="section-body">
+      <table class="vehicle-table">
+        <thead>
+          <tr>
+            <th>Placa Cav.</th>
+            <th>Placa Car. 1</th>
+            <th>Dolly</th>
+            <th>Placa Car. 3</th>
+            <th>UF</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="text" id="placaCav" maxlength="8" placeholder="AAA-0000" oninput="this.value=this.value.toUpperCase()"></td>
+            <td><input type="text" id="placaCar1" maxlength="8" placeholder="AAA-0000" oninput="this.value=this.value.toUpperCase()"></td>
+            <td><input type="text" id="dolly" maxlength="8" placeholder="AAA-0000" oninput="this.value=this.value.toUpperCase()"></td>
+            <td><input type="text" id="placaCar3" maxlength="8" placeholder="AAA-0000" oninput="this.value=this.value.toUpperCase()"></td>
+            <td><input type="text" id="ufVeiculo" maxlength="2" placeholder="GO" oninput="this.value=this.value.toUpperCase()"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- DADOS DO MOTORISTA -->
+    <div class="section-title"><i class="fas fa-id-card"></i> Dados do Motorista</div>
+    <div class="section-body">
+      <div class="row">
+        <div class="field" style="min-width:260px;">
+          <div class="field-label-row">
+            <label>Nome do Motorista</label>
+            <button class="btn-unlock bloqueavel" data-campo="nomeMotorista" onclick="desbloquearCampo('nomeMotorista')" style="display:none;">🔓 Desbloquear</button>
+          </div>
+          <input type="text" id="nomeMotorista" placeholder="Nome completo">
+        </div>
+        <div class="field">
+          <label>Celular</label>
+          <input type="text" id="celularMotorista" placeholder="(00) 00000-0000" oninput="mascaraCelular(this)">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <div class="field-label-row">
+            <label>CPF</label>
+            <button class="btn-unlock bloqueavel" data-campo="cpfMotorista" onclick="desbloquearCampo('cpfMotorista')" style="display:none;">🔓 Desbloquear</button>
+          </div>
+          <input type="text" id="cpfMotorista" placeholder="000.000.000-00" oninput="mascaraCPF(this)" maxlength="14">
+        </div>
+        <div class="field">
+          <div class="field-label-row">
+            <label>RG</label>
+            <button class="btn-unlock bloqueavel" data-campo="rgMotorista" onclick="desbloquearCampo('rgMotorista')" style="display:none;">🔓 Desbloquear</button>
+          </div>
+          <input type="text" id="rgMotorista" placeholder="0000000">
+        </div>
+        <div class="field">
+          <div class="field-label-row">
+            <label>CNH</label>
+            <button class="btn-unlock bloqueavel" data-campo="cnhMotorista" onclick="desbloquearCampo('cnhMotorista')" style="display:none;">🔓 Desbloquear</button>
+          </div>
+          <input type="text" id="cnhMotorista" placeholder="00000000000">
+        </div>
+      </div>
+    </div>
+
+    <!-- LOCAL DE COLETA / OBS -->
+    <div class="section-title"><i class="fas fa-map-marker-alt"></i> Local de Coleta / Observações</div>
+    <div class="section-body">
+      <div class="row">
+        <div class="field" style="min-width:100%;">
+          <label>Local de Coleta</label>
+          <input type="text" id="localColeta" placeholder="Endereço ou descrição do local de coleta">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field" style="min-width:100%;">
+          <label>Observações</label>
+          <textarea id="observacoes" rows="3" placeholder="Informações adicionais..." style="resize:vertical;"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- VALORES DO FRETE -->
+    <div class="section-title"><i class="fas fa-dollar-sign"></i> Valores do Frete</div>
+    <div class="section-body">
+      <div class="row">
+        <div class="field">
+          <label>Peso (KG)</label>
+          <input type="number" id="pesoCalculo" placeholder="0" oninput="calcularFrete()" readonly class="valor-calculated">
+        </div>
+        <div class="field">
+          <label>Valor / Ton (R$)</label>
+          <input type="number" id="valorTon" placeholder="0,00" step="0.01" oninput="calcularFrete()">
+        </div>
+        <div class="field">
+          <label>Total Frete (R$)</label>
+          <input type="text" id="totalFrete" readonly class="valor-calculated" placeholder="R$ 0,00">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Pedágio (R$)</label>
+          <input type="number" id="pedagio" placeholder="0,00" step="0.01" oninput="calcularFrete()">
+        </div>
+        <div class="field">
+          <label>Adiantamento (R$)</label>
+          <input type="number" id="adiantamento" placeholder="0,00" step="0.01" oninput="calcularFrete()">
+        </div>
+        <div class="field">
+          <label>Saldo a Pagar (R$)</label>
+          <input type="text" id="saldoPagar" readonly class="valor-calculated" placeholder="R$ 0,00">
+        </div>
+      </div>
+    </div>
+
+    <!-- ASSINATURAS -->
+    <div class="section-title"><i class="fas fa-signature"></i> Assinaturas</div>
+    <div class="assinatura-row">
+      <div class="assinatura-box">
+        <input type="text" id="assinaturaMotorista" placeholder="Nome do Motorista" style="border:none;border-bottom:1px solid #999;width:100%;text-align:center;font-size:13px;outline:none;padding:4px;">
+        <p style="margin-top:6px;font-size:11px;color:#555;">MOTORISTA</p>
+      </div>
+      <div class="assinatura-box">
+        <input type="text" id="assinaturaAnalista" value="FLAVIO MIGUEL FERREIRA" style="border:none;border-bottom:1px solid #999;width:100%;text-align:center;font-size:13px;outline:none;padding:4px;">
+        <p style="margin-top:6px;font-size:11px;color:#555;">ANALISTA DE LOGÍSTICA</p>
+      </div>
+    </div>
+
+    <!-- BOTÕES -->
+    <div class="btn-row">
+      <button class="btn btn-danger" onclick="limparFormulario()"><i class="fas fa-trash"></i> Limpar</button>
+      <button class="btn btn-primary" onclick="imprimirOrdem()"><i class="fas fa-print"></i> Imprimir / PDF</button>
+      <button class="btn btn-success" onclick="salvarHistorico()"><i class="fas fa-save"></i> Salvar no Histórico</button>
+    </div>
+
+  </div><!-- fim .card -->
+
+  <!-- RODAPÉ -->
+  <div class="form-footer">
+    <img src="images/logo.png" alt="Pianetto" onerror="this.style.display='none'">
+    <span>PIANETTO TRANSPORTES E LOGÍSTICA | CNPJ: 43.976.512/0001-09 | ROD. BR 060 KM 388 — RIO VERDE/GO</span>
+  </div>
+</div><!-- fim .container -->
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <i class="fas fa-check-circle"></i>
+  <span id="toastMsg">Operação realizada!</span>
+</div>
+
+<script>
+// ===================== INICIALIZAÇÃO =====================
+const PEDIDO_KEY = 'pianetto_seq_pedido';
+const OC_KEY = 'pianetto_seq_oc';
+
+function getSeq(key, prefix) {
+  const ano = new Date().getFullYear();
+  const stored = JSON.parse(localStorage.getItem(key) || '{"ano":0,"seq":0}');
+  if (stored.ano !== ano) return { ano, seq: 1 };
+  return { ano, seq: (stored.seq || 0) + 1 };
+}
+
+function saveSeq(key, ano, seq) {
+  localStorage.setItem(key, JSON.stringify({ ano, seq }));
+}
+
+function gerarPedido() {
+  const { ano, seq } = getSeq(PEDIDO_KEY, 'PEDIDO');
+  return `PEDIDO-${ano}-${String(seq).padStart(4, '0')}`;
+}
+
+function gerarOC() {
+  const { ano, seq } = getSeq(OC_KEY, 'OC');
+  return `OC-${ano}-${String(seq).padStart(4, '0')}`;
+}
+
+function init() {
+  // Data de hoje
+  const hoje = new Date().toISOString().split('T')[0];
+  document.getElementById('dataEmissao').value = hoje;
+
+  // Verificar se é duplicação
+  const dupData = sessionStorage.getItem('duplicar_ordem');
+  if (dupData) {
+    preencherDuplicado(JSON.parse(dupData));
+    sessionStorage.removeItem('duplicar_ordem');
+  } else {
+    // Gerar pedido e OC novos
+    document.getElementById('numeroPedido').value = gerarPedido();
+    document.getElementById('numeroOC').textContent = gerarOC();
+  }
+}
+
+// ===================== CAMPOS BLOQUEADOS (DUPLICAÇÃO) =====================
+const CAMPOS_BLOQUEAR = ['remetente','cidadeOrigem','recebedor','destino','mercadoria','pesoBruto','nomeMotorista','cpfMotorista','rgMotorista','cnhMotorista'];
+const VEICULOS_BLOQUEAR = ['placaCav','placaCar1','dolly','placaCar3','ufVeiculo'];
+
+function aplicarBloqueios() {
+  CAMPOS_BLOQUEAR.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.add('bloqueado'); el.readOnly = true; }
+    const btn = document.querySelector(`[data-campo="${id}"]`);
+    if (btn) btn.style.display = 'inline';
+  });
+  VEICULOS_BLOQUEAR.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.add('bloqueado'); el.readOnly = true; }
+  });
+}
+
+function desbloquearCampo(id) {
+  if (!confirm(`Deseja desbloquear o campo "${id}"? Altere com cuidado.`)) return;
+  const el = document.getElementById(id);
+  if (el) { el.classList.remove('bloqueado'); el.readOnly = false; }
+  const btn = document.querySelector(`[data-campo="${id}"]`);
+  if (btn) btn.style.display = 'none';
+}
+
+function desbloquearTodos() {
+  if (!confirm('Deseja desbloquear TODOS os campos? Altere com cuidado.')) return;
+  CAMPOS_BLOQUEAR.concat(VEICULOS_BLOQUEAR).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.remove('bloqueado'); el.readOnly = false; }
+  });
+  document.querySelectorAll('.btn-unlock').forEach(btn => btn.style.display = 'none');
+  document.getElementById('bannerDuplicado').classList.remove('ativo');
+}
+
+function preencherDuplicado(d) {
+  // Gerar nova OC automática
+  const ocData = getSeq(OC_KEY, 'OC');
+  const novaOC = `OC-${ocData.ano}-${String(ocData.seq).padStart(4, '0')}`;
+  document.getElementById('numeroOC').textContent = novaOC;
+
+  // Pedido sugerido editável
+  const pedData = getSeq(PEDIDO_KEY, 'PEDIDO');
+  document.getElementById('numeroPedido').value = `PEDIDO-${pedData.ano}-${String(pedData.seq).padStart(4, '0')}`;
+
+  // Preencher campos
+  const campos = ['remetente','cidadeOrigem','recebedor','destino','mercadoria','pesoBruto','modVeiculo',
+    'placaCav','placaCar1','dolly','placaCar3','ufVeiculo',
+    'nomeMotorista','celularMotorista','cpfMotorista','rgMotorista','cnhMotorista',
+    'localColeta','valorTon','pedagio','adiantamento','assinaturaAnalista'];
+
+  campos.forEach(campo => {
+    const el = document.getElementById(campo);
+    if (el && d[campo] !== undefined) {
+      if (el.tagName === 'SELECT') el.value = d[campo];
+      else el.value = d[campo];
+    }
+  });
+
+  // Data de emissão = hoje, agendamento em branco, status = pendente
+  document.getElementById('dataEmissao').value = new Date().toISOString().split('T')[0];
+  document.getElementById('dataAgend').value = '';
+  document.getElementById('statusOrdem').value = 'Pendente';
+  atualizarStyleStatus();
+
+  // Sincronizar peso
+  if (d.pesoBruto) {
+    document.getElementById('pesoCalculo').value = d.pesoBruto;
+    calcularFrete();
+  }
+
+  // Aplicar bloqueios e mostrar banner
+  aplicarBloqueios();
+  document.getElementById('bannerDuplicado').classList.add('ativo');
+  document.getElementById('bannerDuplicadoTexto').textContent =
+    `Esta é uma cópia da ordem ${d.oc || ''}. Campos importantes estão bloqueados para evitar edição acidental.`;
+
+  mostrarToast('Ordem duplicada! Nova O.C gerada: ' + novaOC, 'info');
+}
+
+// ===================== STATUS =====================
+function atualizarStyleStatus() {
+  const sel = document.getElementById('statusOrdem');
+  sel.className = 'status-select';
+  const v = sel.value;
+  if (v === 'Pendente') sel.classList.add('status-pendente');
+  else if (v === 'Em Transporte') sel.classList.add('status-transporte');
+  else if (v === 'Entregue') sel.classList.add('status-entregue');
+  else if (v === 'Cancelada') sel.classList.add('status-cancelada');
+}
+
+// ===================== MÁSCARAS =====================
+function mascaraCPF(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 11);
+  v = v.replace(/(\d{3})(\d)/, '$1.$2');
+  v = v.replace(/(\d{3})\.(\d{3})(\d)/, '$1.$2.$3');
+  v = v.replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4');
+  el.value = v;
+}
+function mascaraCelular(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length > 2) v = '(' + v.slice(0, 2) + ') ' + v.slice(2);
+  if (v.length > 10) v = v.slice(0, 10) + '-' + v.slice(10);
+  el.value = v;
+}
+
+// ===================== CÁLCULOS =====================
+function calcularFrete() {
+  const peso = parseFloat(document.getElementById('pesoBruto').value) || 0;
+  document.getElementById('pesoCalculo').value = peso;
+  const ton = parseFloat(document.getElementById('valorTon').value) || 0;
+  const pedagio = parseFloat(document.getElementById('pedagio').value) || 0;
+  const adiant = parseFloat(document.getElementById('adiantamento').value) || 0;
+  const total = (peso / 1000) * ton;
+  const saldo = total + pedagio - adiant;
+  document.getElementById('totalFrete').value = 'R$ ' + total.toFixed(2).replace('.', ',');
+  document.getElementById('saldoPagar').value = 'R$ ' + saldo.toFixed(2).replace('.', ',');
+}
+
+// ===================== IMPRIMIR =====================
+function imprimirOrdem() {
+  window.print();
+}
+
+// ===================== SALVAR HISTÓRICO =====================
+async function salvarHistorico() {
+  const oc = document.getElementById('numeroOC').textContent;
+  const pedido = document.getElementById('numeroPedido').value || 'PEDIDO';
+
+  // Guardar a sequência atual
+  const anoAtual = new Date().getFullYear();
+  const seqOCAtual = parseInt(oc.split('-')[2]) || 1;
+  saveSeq(OC_KEY, anoAtual, seqOCAtual);
+  const pedNum = parseInt(pedido.split('-')[2]) || 1;
+  saveSeq(PEDIDO_KEY, anoAtual, pedNum);
+
+  const data = coletarDados();
+
+  try {
+    const res = await fetch('tables/ordens', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (res.ok) {
+      mostrarToast('✅ Ordem salva no histórico!');
+      setTimeout(() => {
+        if (confirm('Ordem salva! Deseja criar uma nova ordem?')) {
+          limparFormulario();
+          // Incrementar sequências
+          const nPed = getSeq(PEDIDO_KEY, 'PEDIDO');
+          document.getElementById('numeroPedido').value = `PEDIDO-${nPed.ano}-${String(nPed.seq).padStart(4, '0')}`;
+          document.getElementById('numeroOC').textContent = `OC-${nPed.ano}-${String(getSeq(OC_KEY, 'OC').seq).padStart(4, '0')}`;
+        }
+      }, 1200);
+    } else {
+      mostrarToast('⚠️ Erro ao salvar. Verifique a conexão.', 'erro');
+    }
+  } catch (e) {
+    mostrarToast('⚠️ Não foi possível conectar ao banco de dados.', 'erro');
+  }
+}
+
+function coletarDados() {
+  return {
+    oc: document.getElementById('numeroOC').textContent,
+    pedido: document.getElementById('numeroPedido').value,
+    dataEmissao: document.getElementById('dataEmissao').value,
+    status: document.getElementById('statusOrdem').value,
+    remetente: document.getElementById('remetente').value,
+    cidadeOrigem: document.getElementById('cidadeOrigem').value,
+    recebedor: document.getElementById('recebedor').value,
+    destino: document.getElementById('destino').value,
+    mercadoria: document.getElementById('mercadoria').value,
+    pesoBruto: document.getElementById('pesoBruto').value,
+    terminal: document.getElementById('terminal').value,
+    dataAgend: document.getElementById('dataAgend').value,
+    modVeiculo: document.getElementById('modVeiculo').value,
+    placaCav: document.getElementById('placaCav').value,
+    placaCar1: document.getElementById('placaCar1').value,
+    dolly: document.getElementById('dolly').value,
+    placaCar3: document.getElementById('placaCar3').value,
+    ufVeiculo: document.getElementById('ufVeiculo').value,
+    nomeMotorista: document.getElementById('nomeMotorista').value,
+    celularMotorista: document.getElementById('celularMotorista').value,
+    cpfMotorista: document.getElementById('cpfMotorista').value,
+    rgMotorista: document.getElementById('rgMotorista').value,
+    cnhMotorista: document.getElementById('cnhMotorista').value,
+    localColeta: document.getElementById('localColeta').value,
+    observacoes: document.getElementById('observacoes').value,
+    valorTon: document.getElementById('valorTon').value,
+    pedagio: document.getElementById('pedagio').value,
+    adiantamento: document.getElementById('adiantamento').value,
+    totalFrete: document.getElementById('totalFrete').value,
+    saldoPagar: document.getElementById('saldoPagar').value,
+    assinaturaMotorista: document.getElementById('assinaturaMotorista').value,
+    assinaturaAnalista: document.getElementById('assinaturaAnalista').value
+  };
+}
+
+// ===================== LIMPAR =====================
+function limparFormulario() {
+  if (!confirm('Limpar todos os campos?')) return;
+  const inputs = document.querySelectorAll('input:not([readonly]):not(#dataEmissao), select, textarea');
+  inputs.forEach(el => el.value = '');
+  document.getElementById('dataEmissao').value = new Date().toISOString().split('T')[0];
+  document.getElementById('statusOrdem').value = 'Pendente';
+  atualizarStyleStatus();
+  calcularFrete();
+  document.getElementById('bannerDuplicado').classList.remove('ativo');
+  CAMPOS_BLOQUEAR.concat(VEICULOS_BLOQUEAR).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.remove('bloqueado'); el.readOnly = false; }
+  });
+  document.querySelectorAll('.btn-unlock').forEach(btn => btn.style.display = 'none');
+}
+
+// ===================== TOAST =====================
+function mostrarToast(msg, tipo) {
+  const t = document.getElementById('toast');
+  const m = document.getElementById('toastMsg');
+  t.style.background = tipo === 'erro' ? '#dc3545' : tipo === 'info' ? '#0077cc' : '#003366';
+  m.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', () => { init(); atualizarStyleStatus(); });
+</script>
+</body>
+</html>
